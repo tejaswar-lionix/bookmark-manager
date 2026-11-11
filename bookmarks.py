@@ -50,3 +50,13 @@ def by_tag(bookmarks, tag):
 
 def remove(bookmarks, index):
     return bookmarks[:index] + bookmarks[index + 1:]
+
+
+def to_markdown(bookmarks):
+    """Render bookmarks as a markdown list with tags."""
+    lines = ["# Bookmarks", ""]
+    for bookmark in bookmarks:
+        tags = " ".join("#" + tag for tag in bookmark["tags"])
+        suffix = " " + tags if tags else ""
+        lines.append("- [%s](%s)%s" % (bookmark["title"], bookmark["url"], suffix))
+    return "\n".join(lines) + "\n"

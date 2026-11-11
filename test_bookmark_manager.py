@@ -39,5 +39,20 @@ class BookmarkTests(unittest.TestCase):
         self.assertEqual([item["title"] for item in bookmarks], ["GitHub"])
 
 
+class MarkdownTests(unittest.TestCase):
+    def test_to_markdown_renders_links_and_tags(self):
+        from bookmarks import to_markdown
+
+        bookmarks = add_bookmark(
+            [],
+            "Python docs",
+            "https://docs.python.org",
+            ["python", "docs"],
+        )
+        markdown = to_markdown(bookmarks)
+        self.assertIn("[Python docs](https://docs.python.org)", markdown)
+        self.assertIn("#python #docs", markdown)
+
+
 if __name__ == "__main__":
     unittest.main()
