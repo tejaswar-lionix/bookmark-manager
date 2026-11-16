@@ -33,6 +33,24 @@ def add_bookmark(bookmarks, title, url, tags=None):
     return bookmarks
 
 
+def dedupe(bookmarks):
+    result = []
+    positions = {}
+    for bookmark in bookmarks:
+        url = bookmark["url"]
+        if url in positions:
+            merged = result[positions[url]]
+            for tag in bookmark.get("tags", []):
+                if tag not in merged["tags"]:
+                    merged["tags"].append(tag)
+        else:
+            positions[url] = len(result)
+            merged = dict(bookmark)
+            merged["tags"] = list(bookmark.get("tags", []))
+            result.append(merged)
+    return result
+
+
 def search(bookmarks, query):
     needle = query.lower()
     return [
