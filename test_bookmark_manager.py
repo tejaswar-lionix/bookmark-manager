@@ -2,7 +2,7 @@ import os
 import tempfile
 import unittest
 
-from bookmarks import add_bookmark, by_tag, dedupe, remove, search
+from bookmarks import add_bookmark, all_tags, by_tag, dedupe, remove, search
 
 NETSCAPE_HTML = """<!DOCTYPE NETSCAPE-Bookmark-file-1>
 <DL><p>
@@ -43,6 +43,12 @@ class BookmarkTests(unittest.TestCase):
 
     def test_by_tag(self):
         self.assertEqual([item["title"] for item in by_tag(self.bookmarks, "git")], ["GitHub"])
+
+    def test_all_tags_unique_and_sorted(self):
+        self.assertEqual(all_tags(self.bookmarks), ["docs", "git", "python"])
+
+    def test_all_tags_empty(self):
+        self.assertEqual(all_tags([]), [])
 
     def test_remove(self):
         bookmarks = remove(self.bookmarks, 0)
