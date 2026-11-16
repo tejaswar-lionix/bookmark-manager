@@ -1,6 +1,16 @@
+import os
+import tempfile
 import unittest
 
 from bookmarks import add_bookmark, by_tag, remove, search
+
+NETSCAPE_HTML = """<!DOCTYPE NETSCAPE-Bookmark-file-1>
+<DL><p>
+    <DT><A HREF="https://docs.python.org" TAGS="Python, Docs">Python Docs</A>
+    <DT><A HREF="https://github.com" TAGS="Git, git">GitHub</A>
+    <DT><A HREF="ftp://example.com">FTP</A>
+</DL><p>
+"""
 
 
 class BookmarkTests(unittest.TestCase):
@@ -52,6 +62,60 @@ class MarkdownTests(unittest.TestCase):
         markdown = to_markdown(bookmarks)
         self.assertIn("[Python docs](https://docs.python.org)", markdown)
         self.assertIn("#python #docs", markdown)
+
+
+class HtmlImportTests(unittest.TestCase):
+    def test_from_html_extracts_titles_urls_and_tags(self):
+        from bookmarks import from_html
+
+        bookmarks = from_html(NETSCAPE_HTML)
+        self.assertEqual(
+            bookmarks,
+            [
+                {
+                    "title": "Python Docs",
+                    "url": "https://docs.python.org",
+                    "tags": ["python", "docs"],
+                },
+                {"title": "GitHub", "url": "https://github.com", "tags": ["git"]},
+            ],
+        )
+
+    def test_blank_anchor_text_falls_back_to_url(self):
+        from bookmarks import from_html
+
+        bookmarks = from_html('<A HREF="https://example.com"></A>')
+        self.assertEqual(bookmarks[0]["title"], "https://example.com")
+
+    def test_non_http_links_are_skipped(self):
+        from bookmarks import from_html
+
+        bookmarks = from_html(
+            '<A HREF="ftp://example.com">FTP</A>'
+            '<A HREF="https://example.com">Example</A>'
+        )
+        self.assertEqual([item["url"] for item in bookmarks], ["https://example.com"])
+
+    def test_tags_are_deduped(self):
+        from bookmarks import from_html
+
+        bookmarks = from_html(
+            '<A HREF="https://example.com" TAGS="Python, Docs, python, DOCS">Example</A>'
+        )
+        self.assertEqual(bookmarks[0]["tags"], ["python", "docs"])
+
+    def test_import_html_reads_file(self):
+        from bookmarks import import_html
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "bookmarks.html")
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write(NETSCAPE_HTML)
+            bookmarks = import_html(path)
+        self.assertEqual([item["url"] for item in bookmarks], [
+            "https://docs.python.org",
+            "https://github.com",
+        ])
 
 
 if __name__ == "__main__":
