@@ -2,7 +2,7 @@ import os
 import tempfile
 import unittest
 
-from bookmarks import add_bookmark, by_tag, remove, search
+from bookmarks import add_bookmark, by_tag, dedupe, remove, search
 
 NETSCAPE_HTML = """<!DOCTYPE NETSCAPE-Bookmark-file-1>
 <DL><p>
@@ -47,6 +47,38 @@ class BookmarkTests(unittest.TestCase):
     def test_remove(self):
         bookmarks = remove(self.bookmarks, 0)
         self.assertEqual([item["title"] for item in bookmarks], ["GitHub"])
+
+
+class DedupeTests(unittest.TestCase):
+    def test_merges_duplicate_urls_and_tags(self):
+        bookmarks = [
+            {"title": "Python", "url": "https://python.org", "tags": ["docs"]},
+            {"title": "Other", "url": "https://example.com", "tags": ["misc"]},
+            {"title": "Python again", "url": "https://python.org", "tags": ["docs", "lang"]},
+        ]
+        result = dedupe(bookmarks)
+        self.assertEqual([item["url"] for item in result], [
+            "https://python.org",
+            "https://example.com",
+        ])
+        self.assertEqual(result[0]["title"], "Python")
+        self.assertEqual(result[0]["tags"], ["docs", "lang"])
+
+    def test_keeps_distinct_urls(self):
+        bookmarks = [
+            {"title": "A", "url": "https://a.example", "tags": []},
+            {"title": "B", "url": "https://b.example", "tags": []},
+        ]
+        self.assertEqual(dedupe(bookmarks), bookmarks)
+
+    def test_input_is_not_mutated(self):
+        bookmarks = [
+            {"title": "Python", "url": "https://python.org", "tags": ["docs"]},
+            {"title": "Python again", "url": "https://python.org", "tags": ["lang"]},
+        ]
+        original = [dict(item, tags=list(item["tags"])) for item in bookmarks]
+        dedupe(bookmarks)
+        self.assertEqual(bookmarks, original)
 
 
 class MarkdownTests(unittest.TestCase):
