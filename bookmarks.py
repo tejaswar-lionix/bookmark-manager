@@ -2,6 +2,7 @@
 """Save, search, and tag bookmarks in a JSON file."""
 import json
 import os
+from html.parser import HTMLParser
 
 DEFAULT_PATH = os.path.expanduser("~/.bookmarks.json")
 
@@ -60,3 +61,52 @@ def to_markdown(bookmarks):
         suffix = " " + tags if tags else ""
         lines.append("- [%s](%s)%s" % (bookmark["title"], bookmark["url"], suffix))
     return "\n".join(lines) + "\n"
+
+
+class _BookmarkHTMLParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.bookmarks = []
+        self._href = None
+        self._text = []
+        self._tags = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag.lower() != "a":
+            return
+        attributes = dict(attrs)
+        self._href = attributes.get("href")
+        self._text = []
+        self._tags = (attributes.get("tags") or "").split(",")
+
+    def handle_data(self, data):
+        if self._href is not None:
+            self._text.append(data)
+
+    def handle_endtag(self, tag):
+        if tag.lower() != "a" or self._href is None:
+            return
+        href = self._href
+        self._href = None
+        if not href or not href.startswith(("http://", "https://")):
+            return
+        title = "".join(self._text).strip() or href
+        tags = []
+        for value in self._tags:
+            value = value.strip().lower()
+            if value and value not in tags:
+                tags.append(value)
+        self.bookmarks.append({"title": title, "url": href, "tags": tags})
+
+
+def from_html(html_text):
+    """Extract bookmarks from anchor tags in an HTML document."""
+    parser = _BookmarkHTMLParser()
+    parser.feed(html_text)
+    parser.close()
+    return parser.bookmarks
+
+
+def import_html(path):
+    with open(path, encoding="utf-8") as handle:
+        return from_html(handle.read())
