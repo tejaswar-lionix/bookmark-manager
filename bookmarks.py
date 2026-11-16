@@ -67,6 +67,14 @@ def by_tag(bookmarks, tag):
     return [bookmark for bookmark in bookmarks if tag in bookmark["tags"]]
 
 
+def all_tags(bookmarks):
+    """Return a sorted list of unique tags across all bookmarks."""
+    tags = set()
+    for bookmark in bookmarks:
+        tags.update(bookmark.get("tags", []))
+    return sorted(tags)
+
+
 def remove(bookmarks, index):
     return bookmarks[:index] + bookmarks[index + 1:]
 
