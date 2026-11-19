@@ -67,6 +67,15 @@ def by_tag(bookmarks, tag):
     return [bookmark for bookmark in bookmarks if tag in bookmark["tags"]]
 
 
+def remove_by_tag(bookmarks, tag):
+    needle = tag.lower()
+    return [
+        bookmark
+        for bookmark in bookmarks
+        if needle not in [value.lower() for value in bookmark.get("tags", [])]
+    ]
+
+
 def all_tags(bookmarks):
     """Return a sorted list of unique tags across all bookmarks."""
     tags = set()

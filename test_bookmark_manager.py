@@ -2,7 +2,7 @@ import os
 import tempfile
 import unittest
 
-from bookmarks import add_bookmark, all_tags, by_tag, dedupe, remove, search
+from bookmarks import add_bookmark, all_tags, by_tag, dedupe, remove, remove_by_tag, search
 
 NETSCAPE_HTML = """<!DOCTYPE NETSCAPE-Bookmark-file-1>
 <DL><p>
@@ -53,6 +53,27 @@ class BookmarkTests(unittest.TestCase):
     def test_remove(self):
         bookmarks = remove(self.bookmarks, 0)
         self.assertEqual([item["title"] for item in bookmarks], ["GitHub"])
+
+    def test_remove_by_tag_removes_matching(self):
+        bookmarks = remove_by_tag(self.bookmarks, "docs")
+        self.assertEqual([item["title"] for item in bookmarks], ["GitHub"])
+
+    def test_remove_by_tag_is_case_insensitive(self):
+        bookmarks = remove_by_tag(self.bookmarks, "PYTHON")
+        self.assertEqual([item["title"] for item in bookmarks], ["GitHub"])
+
+    def test_remove_by_tag_keeps_others(self):
+        bookmarks = remove_by_tag(self.bookmarks, "git")
+        self.assertEqual([item["title"] for item in bookmarks], ["Python docs"])
+
+    def test_remove_by_tag_unknown_keeps_all(self):
+        bookmarks = remove_by_tag(self.bookmarks, "missing")
+        self.assertEqual(bookmarks, self.bookmarks)
+
+    def test_remove_by_tag_does_not_mutate_input(self):
+        original = [dict(item, tags=list(item["tags"])) for item in self.bookmarks]
+        remove_by_tag(self.bookmarks, "docs")
+        self.assertEqual(self.bookmarks, original)
 
 
 class DedupeTests(unittest.TestCase):
