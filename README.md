@@ -28,6 +28,10 @@ python3 -c "from bookmarks import remove_by_tag; print(remove_by_tag([{'title': 
 python3 -m unittest -q
 ```
 
+## Additional API
+
+- `rename_tag(bookmarks, old, new)` renames a tag across all bookmarks and merges duplicates.
+
 ## License
 
 MIT

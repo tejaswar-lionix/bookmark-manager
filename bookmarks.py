@@ -145,3 +145,22 @@ def from_html(html_text):
 def import_html(path):
     with open(path, encoding="utf-8") as handle:
         return from_html(handle.read())
+
+
+def rename_tag(bookmarks, old, new):
+    """Rename a tag everywhere, merging duplicates created by the rename."""
+    old = old.strip().lower()
+    new = new.strip().lower()
+    if not new:
+        raise ValueError("new tag must not be empty")
+    for bookmark in bookmarks:
+        tags = bookmark.get("tags", [])
+        if old not in tags:
+            continue
+        renamed = []
+        for tag in tags:
+            candidate = new if tag == old else tag
+            if candidate not in renamed:
+                renamed.append(candidate)
+        bookmark["tags"] = renamed
+    return bookmarks

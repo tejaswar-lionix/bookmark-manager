@@ -177,5 +177,31 @@ class HtmlImportTests(unittest.TestCase):
         ])
 
 
+class RenameTagTests(unittest.TestCase):
+    def test_renames_tag_across_bookmarks(self):
+        from bookmarks import rename_tag
+
+        bookmarks = [
+            {"title": "A", "url": "https://a.com", "tags": ["docs"]},
+            {"title": "B", "url": "https://b.com", "tags": ["docs", "python"]},
+        ]
+        rename_tag(bookmarks, "docs", "reference")
+        self.assertEqual(bookmarks[0]["tags"], ["reference"])
+        self.assertEqual(bookmarks[1]["tags"], ["reference", "python"])
+
+    def test_merges_duplicate_tags(self):
+        from bookmarks import rename_tag
+
+        bookmarks = [{"title": "A", "url": "https://a.com", "tags": ["old", "new"]}]
+        rename_tag(bookmarks, "old", "new")
+        self.assertEqual(bookmarks[0]["tags"], ["new"])
+
+    def test_rejects_empty_new_tag(self):
+        from bookmarks import rename_tag
+
+        with self.assertRaises(ValueError):
+            rename_tag([], "old", "  ")
+
+
 if __name__ == "__main__":
     unittest.main()
